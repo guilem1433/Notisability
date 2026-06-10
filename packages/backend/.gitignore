@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.env
+storage/products/*
+!storage/products/.gitkeep
+*.log

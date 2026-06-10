@@ -1,0 +1,338 @@
+// Notisability - Esquema relacional (PostgreSQL)
+// Entidades minimas exigidas por el Contrato 008-2026:
+// Usuarios, Roles, Productos, Categorias, Compras, Detalle de compras,
+// Pagos, Biblioteca de usuario, Reseñas/Calificaciones, Promociones.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------
+// Roles y usuarios
+// ----------------------------------------------------------------------
+
+enum RoleName {
+  ADMIN // Administrador
+  PROVIDER // Desarrollador / Proveedor de contenido
+  CUSTOMER // Usuario final
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        RoleName @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name")
+  roleId       Int      @map("role_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  products      Product[]
+  cart          Cart?
+  orders        Order[]
+  reviews       Review[]
+  libraryItems  UserLibraryItem[]
+  refreshTokens RefreshToken[]
+
+  @@index([roleId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ----------------------------------------------------------------------
+// Catalogo: categorias y productos
+// ----------------------------------------------------------------------
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@map("categories")
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Product {
+  id            String        @id @default(uuid())
+  providerId    String        @map("provider_id")
+  categoryId    Int           @map("category_id")
+  title         String
+  slug          String        @unique
+  description   String
+  price         Decimal       @db.Decimal(12, 2)
+  currency      String        @default("COP") @db.VarChar(3)
+  coverImageUrl String?       @map("cover_image_url")
+  status        ProductStatus @default(DRAFT)
+  averageRating Decimal       @default(0) @map("average_rating") @db.Decimal(3, 2)
+  ratingsCount  Int           @default(0) @map("ratings_count")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  provider User     @relation(fields: [providerId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  files             ProductFile[]
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  reviews           Review[]
+  libraryItems      UserLibraryItem[]
+  productPromotions ProductPromotion[]
+
+  @@index([categoryId])
+  @@index([providerId])
+  @@index([status])
+  @@map("products")
+}
+
+// Sistema de actualizaciones de productos: cada version subida queda
+// registrada y disponible para los usuarios que ya lo tengan en su biblioteca.
+model ProductFile {
+  id            String   @id @default(uuid())
+  productId     String   @map("product_id")
+  version       String
+  fileName      String   @map("file_name")
+  filePath      String   @map("file_path")
+  fileSizeBytes BigInt   @map("file_size_bytes")
+  changelog     String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, version])
+  @@index([productId])
+  @@map("product_files")
+}
+
+// ----------------------------------------------------------------------
+// Carrito de compras
+// ----------------------------------------------------------------------
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String   @map("cart_id")
+  productId String   @map("product_id")
+  unitPrice Decimal  @map("unit_price") @db.Decimal(12, 2)
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+// ----------------------------------------------------------------------
+// Compras (ordenes), detalle de compra y pagos
+// ----------------------------------------------------------------------
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+  FAILED
+  REFUNDED
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  userId        String      @map("user_id")
+  status        OrderStatus @default(PENDING)
+  subtotal      Decimal     @db.Decimal(12, 2)
+  discountTotal Decimal     @default(0) @map("discount_total") @db.Decimal(12, 2)
+  total         Decimal     @db.Decimal(12, 2)
+  currency      String      @default("COP") @db.VarChar(3)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  items        OrderItem[]
+  payments     Payment[]
+  libraryItems UserLibraryItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+// Detalle de compra
+model OrderItem {
+  id           String  @id @default(uuid())
+  orderId      String  @map("order_id")
+  productId    String  @map("product_id")
+  productTitle String  @map("product_title")
+  unitPrice    Decimal @map("unit_price") @db.Decimal(12, 2)
+  quantity     Int     @default(1)
+  subtotal     Decimal @db.Decimal(12, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+enum PaymentStatus {
+  PENDING
+  IN_PROCESS
+  APPROVED
+  REJECTED
+  CANCELLED
+  REFUNDED
+  CHARGED_BACK
+}
+
+model Payment {
+  id                 String        @id @default(uuid())
+  orderId            String        @map("order_id")
+  provider           String        @default("mercadopago")
+  preferenceId       String?       @map("preference_id")
+  externalPaymentId  String?       @map("external_payment_id")
+  status             PaymentStatus @default(PENDING)
+  statusDetail       String?       @map("status_detail")
+  amount             Decimal       @db.Decimal(12, 2)
+  currency           String        @default("COP") @db.VarChar(3)
+  rawPayload         Json?         @map("raw_payload")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([externalPaymentId])
+  @@map("payments")
+}
+
+// ----------------------------------------------------------------------
+// Biblioteca digital del usuario
+// ----------------------------------------------------------------------
+
+model UserLibraryItem {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  productId        String    @map("product_id")
+  orderId          String    @map("order_id")
+  acquiredAt       DateTime  @default(now()) @map("acquired_at")
+  lastDownloadedAt DateTime? @map("last_downloaded_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("user_library_items")
+}
+
+// ----------------------------------------------------------------------
+// Reseñas y calificaciones
+// ----------------------------------------------------------------------
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  rating    Int      @db.SmallInt
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@map("reviews")
+}
+
+// ----------------------------------------------------------------------
+// Promociones / descuentos
+// ----------------------------------------------------------------------
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+model Promotion {
+  id            String       @id @default(uuid())
+  name          String
+  description   String?
+  discountType  DiscountType @map("discount_type")
+  discountValue Decimal      @map("discount_value") @db.Decimal(12, 2)
+  code          String?      @unique
+  startDate     DateTime     @map("start_date")
+  endDate       DateTime     @map("end_date")
+  isActive      Boolean      @default(true) @map("is_active")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  productPromotions ProductPromotion[]
+
+  @@map("promotions")
+}
+
+model ProductPromotion {
+  id          String @id @default(uuid())
+  productId   String @map("product_id")
+  promotionId String @map("promotion_id")
+
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, promotionId])
+  @@map("product_promotions")
+}
