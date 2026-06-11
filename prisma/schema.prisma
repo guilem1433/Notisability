@@ -1,0 +1,182 @@
+// Prisma schema - Notisability
+// Plataforma e-commerce académica de productos digitales interactivos
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  ADMIN
+  DEVELOPER
+  USER
+}
+
+enum PurchaseStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+  CANCELLED
+}
+
+model Role {
+  id    Int      @id @default(autoincrement())
+  name  RoleName @unique
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  roleId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role      Role           @relation(fields: [roleId], references: [id])
+  products  Product[]      @relation("ProductCreator")
+  purchases Purchase[]
+  reviews   Review[]
+  library   UserLibrary[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String?
+  fileUrl     String?
+  creatorId   Int
+  categoryId  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator         User              @relation("ProductCreator", fields: [creatorId], references: [id])
+  category        Category          @relation(fields: [categoryId], references: [id])
+  promotions      Promotion[]
+  purchaseDetails PurchaseDetail[]
+  reviews         Review[]
+  libraryEntries  UserLibrary[]
+
+  @@map("products")
+}
+
+model Promotion {
+  id                 Int      @id @default(autoincrement())
+  productId          Int
+  discountPercentage Decimal  @db.Decimal(5, 2)
+  startDate          DateTime
+  endDate            DateTime
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("promotions")
+}
+
+model Purchase {
+  id        Int            @id @default(autoincrement())
+  userId    Int
+  total     Decimal        @db.Decimal(10, 2)
+  status    PurchaseStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  user    User              @relation(fields: [userId], references: [id])
+  details PurchaseDetail[]
+  payment Payment?
+  library UserLibrary[]
+
+  @@map("purchases")
+}
+
+model PurchaseDetail {
+  id         Int     @id @default(autoincrement())
+  purchaseId Int
+  productId  Int
+  unitPrice  Decimal @db.Decimal(10, 2)
+  quantity   Int     @default(1)
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@map("purchase_details")
+}
+
+model Payment {
+  id              Int           @id @default(autoincrement())
+  purchaseId      Int           @unique
+  mpPaymentId     String?       @unique
+  mpPreferenceId  String?
+  status          PaymentStatus @default(PENDING)
+  amount          Decimal       @db.Decimal(10, 2)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id])
+
+  @@map("payments")
+}
+
+model UserLibrary {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  productId  Int
+  purchaseId Int?
+  acquiredAt DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id])
+  product  Product   @relation(fields: [productId], references: [id])
+  purchase Purchase? @relation(fields: [purchaseId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("user_library")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
