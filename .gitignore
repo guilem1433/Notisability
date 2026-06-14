@@ -1,0 +1,11 @@
+node_modules
+dist
+
+# Keep environment variables out of version control
+.env
+
+# Archivos subidos por los usuarios
+uploads/images/*
+uploads/files/*
+!uploads/images/.gitkeep
+!uploads/files/.gitkeep
