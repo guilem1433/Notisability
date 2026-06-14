@@ -5,7 +5,18 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: '#10B981',
+          hover: '#059669',
+        },
+        surface: '#F8FAFC',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'Roboto', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 }

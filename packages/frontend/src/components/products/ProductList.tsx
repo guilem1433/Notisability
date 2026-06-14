@@ -44,19 +44,19 @@ export function ProductList({ filters, onSelectProduct }: ProductListProps) {
   }, [filters]);
 
   if (loading) {
-    return <p className="product-list__status">Cargando productos...</p>;
+    return <p className="py-12 text-center text-lg text-slate-500">Cargando productos...</p>;
   }
 
   if (error) {
-    return <p className="product-list__status product-list__status--error">{error}</p>;
+    return <p className="py-12 text-center text-lg text-red-600">{error}</p>;
   }
 
   if (products.length === 0) {
-    return <p className="product-list__status">No se encontraron productos.</p>;
+    return <p className="py-12 text-center text-lg text-slate-500">No se encontraron productos.</p>;
   }
 
   return (
-    <div className="product-list">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {products.map((product) => (
         <ProductCard key={product.id} product={product} onClick={onSelectProduct} />
       ))}

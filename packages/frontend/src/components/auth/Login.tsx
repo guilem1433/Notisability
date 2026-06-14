@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { AxiosError } from "axios";
 import authService from "../../services/auth.service";
 import { LoginPayload } from "../../types/auth.types";
+import Button from "../common/Button";
 
 interface LoginProps {
   onSuccess?: () => void;
@@ -33,36 +34,51 @@ export function Login({ onSuccess }: LoginProps) {
   };
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit}>
-      <h2>Iniciar sesión</h2>
+    <div className="flex min-h-[70vh] items-center justify-center px-4">
+      <form
+        className="flex w-full max-w-md flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-8 shadow-md"
+        onSubmit={handleSubmit}
+      >
+        <h2 className="mb-2 text-2xl font-bold text-slate-900">Iniciar sesión</h2>
 
-      <label htmlFor="login-email">Correo electrónico</label>
-      <input
-        id="login-email"
-        type="email"
-        value={form.email}
-        onChange={handleChange("email")}
-        required
-        autoComplete="email"
-      />
+        <label htmlFor="login-email" className="text-sm font-semibold text-slate-500">
+          Correo electrónico
+        </label>
+        <input
+          id="login-email"
+          type="email"
+          value={form.email}
+          onChange={handleChange("email")}
+          required
+          autoComplete="email"
+          className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 transition-colors duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
 
-      <label htmlFor="login-password">Contraseña</label>
-      <input
-        id="login-password"
-        type="password"
-        value={form.password}
-        onChange={handleChange("password")}
-        required
-        autoComplete="current-password"
-        minLength={8}
-      />
+        <label htmlFor="login-password" className="text-sm font-semibold text-slate-500">
+          Contraseña
+        </label>
+        <input
+          id="login-password"
+          type="password"
+          value={form.password}
+          onChange={handleChange("password")}
+          required
+          autoComplete="current-password"
+          minLength={8}
+          className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 transition-colors duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
 
-      {error && <p className="auth-form__error">{error}</p>}
+        {error && (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            {error}
+          </p>
+        )}
 
-      <button type="submit" disabled={isLoading}>
-        {isLoading ? "Ingresando..." : "Ingresar"}
-      </button>
-    </form>
+        <Button type="submit" disabled={isLoading} className="mt-2 w-full">
+          {isLoading ? "Ingresando..." : "Ingresar"}
+        </Button>
+      </form>
+    </div>
   );
 }
 

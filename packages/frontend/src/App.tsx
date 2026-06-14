@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import Button from "./components/common/Button";
 import Navbar from "./components/navigation/Navbar";
 import ProductList from "./components/products/ProductList";
 import ProductDetail from "./components/products/ProductDetail";
@@ -22,7 +23,27 @@ function CatalogPage() {
     navigate(`/product/${product.slug}`);
   };
 
-  return <ProductList onSelectProduct={handleSelectProduct} />;
+  return (
+    <div className="flex flex-col gap-10">
+      <section className="flex flex-col items-center gap-4 rounded-2xl bg-surface px-6 py-16 text-center">
+        <h1 className="max-w-2xl text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+          Encuentra los mejores recursos digitales para tus proyectos
+        </h1>
+        <p className="max-w-xl text-base text-slate-500 sm:text-lg">
+          Explora nuestro catálogo de plantillas, guías y herramientas creadas por proveedores
+          verificados.
+        </p>
+        <Button variant="primary" onClick={() => navigate("/products")} className="mt-2">
+          Explorar catálogo
+        </Button>
+      </section>
+
+      <section className="flex flex-col gap-6">
+        <h2 className="text-2xl font-bold text-slate-900">Productos destacados</h2>
+        <ProductList onSelectProduct={handleSelectProduct} />
+      </section>
+    </div>
+  );
 }
 
 function CartPage() {
