@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { AxiosError } from "axios";
-import authService from "../../services/auth.service";
+import { useAuth } from "../../context/AuthContext";
 import { RegisterPayload, RoleName } from "../../types/auth.types";
 import Button from "../common/Button";
 
@@ -16,6 +16,7 @@ const initialForm: RegisterPayload = {
 };
 
 export function Register({ onSuccess }: RegisterProps) {
+  const { register } = useAuth();
   const [form, setForm] = useState<RegisterPayload>(initialForm);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +33,7 @@ export function Register({ onSuccess }: RegisterProps) {
     setIsLoading(true);
 
     try {
-      await authService.register(form);
+      await register(form);
       onSuccess?.();
     } catch (err) {
       const axiosError = err as AxiosError<{ message?: string }>;

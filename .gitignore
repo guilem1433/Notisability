@@ -9,3 +9,10 @@ uploads/images/*
 uploads/files/*
 !uploads/images/.gitkeep
 !uploads/files/.gitkeep
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

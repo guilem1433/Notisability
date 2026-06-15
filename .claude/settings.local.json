@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(npx prisma *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(curl -s \"http://localhost:5174/src/index.css\")",
+      "Bash(pkill -f \"vite --port 5174\")",
+      "Read(//tmp/**)",
+      "Bash(grep -o \"bg-surface[^{]*{[^}]*}\" /tmp/dev.css | head -2; rm /tmp/dev.css)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

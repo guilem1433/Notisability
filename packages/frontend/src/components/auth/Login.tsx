@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { AxiosError } from "axios";
-import authService from "../../services/auth.service";
+import { useAuth } from "../../context/AuthContext";
 import { LoginPayload } from "../../types/auth.types";
 import Button from "../common/Button";
 
@@ -9,6 +9,7 @@ interface LoginProps {
 }
 
 export function Login({ onSuccess }: LoginProps) {
+  const { login } = useAuth();
   const [form, setForm] = useState<LoginPayload>({ email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +24,7 @@ export function Login({ onSuccess }: LoginProps) {
     setIsLoading(true);
 
     try {
-      await authService.login(form);
+      await login(form);
       onSuccess?.();
     } catch (err) {
       const axiosError = err as AxiosError<{ message?: string }>;

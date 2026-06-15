@@ -1,17 +1,16 @@
 {
-  "name": "entrega-final-segundo-intento",
+  "name": "@notisability/backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "API REST de Notisability (auth, productos, ordenes, biblioteca, proveedor, admin)",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
@@ -27,7 +26,6 @@
     "multer": "^2.1.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -38,7 +36,7 @@
     "prisma": "^6.19.3",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^6.0.3"
+    "typescript": "^5.7.3"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

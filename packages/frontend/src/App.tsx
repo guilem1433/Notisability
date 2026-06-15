@@ -33,12 +33,18 @@ function CatalogPage() {
           Explora nuestro catálogo de plantillas, guías y herramientas creadas por proveedores
           verificados.
         </p>
-        <Button variant="primary" onClick={() => navigate("/products")} className="mt-2">
+        <Button
+          variant="primary"
+          onClick={() =>
+            document.querySelector("#productos-destacados")?.scrollIntoView({ behavior: "smooth" })
+          }
+          className="mt-2"
+        >
           Explorar catálogo
         </Button>
       </section>
 
-      <section className="flex flex-col gap-6">
+      <section id="productos-destacados" className="flex flex-col gap-6">
         <h2 className="text-2xl font-bold text-slate-900">Productos destacados</h2>
         <ProductList onSelectProduct={handleSelectProduct} />
       </section>

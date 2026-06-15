@@ -15,8 +15,8 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<User> {
-    const { data } = await apiService.get<User>("/auth/me");
-    return data;
+    const { data } = await apiService.get<{ user: User }>("/auth/me");
+    return data.user;
   }
 
   logout(): void {
